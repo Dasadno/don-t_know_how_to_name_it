@@ -5,6 +5,8 @@ import (
 
 	authv1 "github.com/Dasadno/service/server/gen/auth/v1"
 	rkboot "github.com/rookie-ninja/rk-boot/v2"
+	rkpostgres "github.com/rookie-ninja/rk-db/postgres"
+	rkredis "github.com/rookie-ninja/rk-db/redis"
 	rkgrpc "github.com/rookie-ninja/rk-grpc/v2/boot"
 	"google.golang.org/grpc"
 )
@@ -22,15 +24,35 @@ func (s *AuthServer) Login(ctx context.Context, req *authv1.LoginRequest) (*auth
 }
 
 func main() {
-	ctx := context.WithoutCancel(context.Background())
 	boot := rkboot.NewBoot(rkboot.WithBootConfigPath("services/auth-service/boot.yaml", nil))
-	entry := rkgrpc.GetGrpcEntry("auth-service")
 
-	entry.AddRegFuncGrpc(func(server *grpc.Server) {
+	boot.Bootstrap(context.TODO())
+
+	// REDIS
+	// auto migrate database and init userDb variable
+	redisEntry := rkredis.GetRedisEntry("server")
+	redisClient, _ := redisEntry.GetClient()
+	_ = redisClient
+
+	// POSTGRES
+	// auto migrate database and init userDb variable
+	pgEntry := rkpostgres.GetPostgresEntry("auth-db")
+	userDb := pgEntry.GetDB("user")
+	if !userDb.DryRun {
+		userDb.AutoMigrate(&User{})
+	}
+
+	// GRPC
+	grpcEntry := rkgrpc.GetGrpcEntry("auth-service")
+
+	grpcEntry.AddRegFuncGrpc(func(server *grpc.Server) {
 		authv1.RegisterAuthServiceServer(server, &AuthServer{})
 	})
-	entry.AddRegFuncGw(authv1.RegisterAuthServiceHandlerFromEndpoint)
+	grpcEntry.AddRegFuncGw(authv1.RegisterAuthServiceHandlerFromEndpoint)
 
-	boot.Bootstrap(ctx)
-	boot.WaitForShutdownSig(ctx)
+	boot.WaitForShutdownSig(context.TODO())
+}
+
+type User struct {
+	// todo
 }
