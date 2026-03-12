@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package auth.v1;
+option go_package = "backend/gen/auth/v1;authv1";
+
+import "google/api/annotations.proto";
+// service for authentification 
+// Now it have only 3 methods
+service AuthService {
+    // Register, get in email and password on out AuthResponce, read about it in bottom
+  rpc Register(RegisterRequest) returns (AuthResponse) {
+    option (google.api.http) = {
+      post: "/api/auth/register"
+      body: "*"
+    };
+  }
+  // Login, get in email and password, on out AuthResponce, read about it in bottom
+  rpc Login(LoginRequest) returns (AuthResponse) {
+    option (google.api.http) = {
+      post: "/api/auth/login"
+      body: "*"
+    };
+  }
+  // RefreshToken, this feature needs for security, if someone stole account we can refresh token at any moment 
+  rpc RefreshToken(RefreshRequest) returns (AuthResponse) {
+    option (google.api.http) = {
+        post: "/api/auth/refresh"
+        body: "*"
+    };
+  }
+}
+
+
+message RefreshRequest {
+    string refresh_token = 1; // refresh_token if token match with user refresh_token, we expire his token and session
+}
+message AuthResponse {
+    string access_token = 1; // JWT token
+    string refresh_token = 2; // refresh_token for security
+    int64 expires_in = 3; // time of valid JWT token
+    UserInfo user_info = 4; // information about user
+}
+
+message RegisterRequest { // just register request, other information like confirmed password captcha and other will be on frontend
+    string email = 1;
+    string password = 2;
+}
+
+message LoginRequest { // login request
+    string email = 1;
+    string password = 2;
+}
+
+message UserInfo { 
+    string user_id = 1; // User id
+    string email = 2; // User email
+    string name = 3; // User name
+    bool is_confirmed = 4; // Is account confirmed or not
+    string role = 5; // Инструктор || курсант // roles of user
+}
+
+

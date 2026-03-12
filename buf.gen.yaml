@@ -1,0 +1,11 @@
+version: v1
+plugins:
+  - name: go
+    out: gen/auth/v1
+    opt: paths=source_relative
+  - name: go-grpc
+    out: gen/auth/v1
+    opt: paths=source_relative
+  - name: grpc-gateway
+    out: gen/auth/v1
+    opt: paths=source_relative
