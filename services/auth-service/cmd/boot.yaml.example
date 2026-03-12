@@ -1,0 +1,25 @@
+postgres:
+   - name: auth-db
+     enabled: true
+     domain: "localhost"
+     port: 5432
+     user: "postgres"
+     pass: "pass"
+     database: "auth_db"
+
+grpc:
+  - name: auth-service
+    port: 8080
+    enabled: true
+    reflection: true
+    gw:
+      enabled: true
+      port: 8081
+    interceptors:
+      loggingZap:
+        enabled: true
+      auth:
+        enabled: true
+        jwt:
+          signingKey: "my-secret"
+          ignore: ["/auth.v1.AuthService/Register", "/auth.v1.AuthService/Login"]
